@@ -572,7 +572,8 @@ body::after {
         <h3>安装步骤</h3>
         <div class="step-item">
           <div class="step-num">1</div>
-          <div><h4>安装脚本管理器</h4><p>在浏览器扩展商店安装 Tampermonkey 或 Violentmonkey（暴力猴）</p></div>
+          <div><h4>安装脚本管理器</h4><p>在浏览器扩展商店安装 <a href="https://www.tampermonkey.net/">Tampermonkey</a>
+ 或 Violentmonkey（暴力猴）</p></div>
         </div>
         <div class="step-item">
           <div class="step-num">2</div>
@@ -593,7 +594,8 @@ body::after {
           </button>
         </div>
         <div class="code-body">
-          <pre id="scriptSource">// ==UserScript==
+          <pre id="scriptSource">
+      // ==UserScript==
 // @name         BiliClip 喵贴  B站一键填充BV码和标题
 // @namespace    https://www.bilibili.com/
 // @version      7.2.1
@@ -609,25 +611,33 @@ body::after {
 // @grant        GM_xmlhttpRequest
 // @connect      api.bilibili.com
 // ==/UserScript==
+
 (function () {
   'use strict';
+
   const KEY = 'biliclip_pair_v72';
+
   const isBili =
     /(^|\.)bilibili\.com$/i.test(location.hostname);
+
   const isMember =
     /(^|\.)member\.bilibili\.com$/i.test(location.hostname);
+
   let pair = validPair(
     GM_getValue(KEY, null)
   );
+
   let step = 0;
   let ui = null;
   let writingClipboard = false;
   let reminderKey = '';
+
   GM_addValueChangeListener(
     KEY,
     (_key, _old, value) => {
       pair = validPair(value);
       step = 0;
+
       if (pair) {
         setTimeout(
           checkReminder,
@@ -636,11 +646,13 @@ body::after {
       }
     }
   );
+
   document.addEventListener(
     'keydown',
     onPaste,
     true
   );
+
   document.addEventListener(
     'copy',
     () => {
@@ -650,6 +662,7 @@ body::after {
     },
     true
   );
+
   document.addEventListener(
     'cut',
     () => {
@@ -659,6 +672,7 @@ body::after {
     },
     true
   );
+
   document.addEventListener(
     'keydown',
     event => {
@@ -674,22 +688,27 @@ body::after {
     },
     true
   );
+
   ready(() => {
     if (pair) {
       checkReminder();
     }
+
     if (isBili && !isMember) {
       createBiliUI();
+
       setInterval(
         createBiliUI,
         1500
       );
     }
   });
+
   setInterval(
     checkReminder,
     1000
   );
+
   function ready(callback) {
     if (
       document.readyState ===
@@ -704,11 +723,13 @@ body::after {
       callback();
     }
   }
+
   function clean(value) {
     return String(value || '')
       .replace(/\s+/g, ' ')
       .trim();
   }
+
   function validPair(value) {
     if (
       !value ||
@@ -716,8 +737,10 @@ body::after {
     ) {
       return null;
     }
+
     const bv = clean(value.bv);
     const title = clean(value.title);
+
     return (
       /^BV[0-9A-Za-z]{10}$/.test(bv) &&
       title
@@ -730,25 +753,34 @@ body::after {
         }
       : null;
   }
+
   function savePair(bv, title) {
     const value = {
       bv,
       title: clean(title),
       savedAt: Date.now()
     };
+
     GM_setValue(KEY, value);
+
     pair = validPair(value);
     step = 0;
+
     writeClipboard(bv);
   }
+
   function clearPair() {
     if (!pair) return;
+
     pair = null;
     step = 0;
+
     GM_setValue(KEY, null);
   }
+
   function writeClipboard(text) {
     writingClipboard = true;
+
     try {
       GM_setClipboard(
         text,
@@ -759,21 +791,27 @@ body::after {
         ?.writeText(text)
         .catch(() => {});
     }
+
     setTimeout(() => {
       writingClipboard = false;
     }, 200);
   }
+
   /* ==================== 粘贴与自动填充 ==================== */
+
  function onPaste(event) {
   // 只允许 B 站页面接管粘贴
   if (!isBili) return;
+
   if (!pair) return;
+
     if (
       !event.ctrlKey &&
       !event.metaKey
     ) {
       return;
     }
+
     if (
       event.altKey ||
       event.shiftKey ||
@@ -781,34 +819,43 @@ body::after {
     ) {
       return;
     }
+
     if (
       event.key.toLowerCase() !==
       'v'
     ) {
       return;
     }
+
     const fields =
       findCreatorFields();
+
     if (fields) {
       event.preventDefault();
       event.stopImmediatePropagation();
+
       const current = pair;
+
       const bvDone =
         replaceValue(
           fields.bv,
           current.bv
         );
+
       const titleDone =
         replaceValue(
           fields.title,
           current.title
         );
+
       if (
         bvDone &&
         titleDone
       ) {
         fields.title.focus();
+
         clearPair();
+
         toast(
           '✓ 已自动填充「关联视频ID/链接」和「描述文案」',
           'blue',
@@ -821,27 +868,36 @@ body::after {
           2300
         );
       }
+
       return;
     }
+
     if (isCreatorPage()) {
       event.preventDefault();
       event.stopImmediatePropagation();
+
       toast(
         '请先打开「关联视频」，等两个输入框出现后再粘贴',
         'pink',
         2300
       );
+
       return;
     }
+
     const editor =
       getEventEditor(event);
+
     if (!editor) return;
+
     const text =
       step === 0
         ? pair.bv
         : pair.title;
+
     event.preventDefault();
     event.stopImmediatePropagation();
+
     if (
       !insertAtCursor(
         editor,
@@ -850,36 +906,44 @@ body::after {
     ) {
       return;
     }
+
     step =
       step === 0
         ? 1
         : 0;
+
     writeClipboard(
       step === 0
         ? pair.bv
         : pair.title
     );
+
     toast(
       step === 1
         ? '✓ BV 已粘贴 · 下次标题'
         : '✓ 标题已粘贴 · 下次 BV'
     );
   }
+
   function isCreatorPage() {
     if (isMember) {
       return true;
     }
+
     const heading =
       document.querySelector(
         'h1, [class*="page-title"]'
       );
+
     const pageText = clean(
       `${document.title} ${
         heading?.textContent || ''
       }`
     );
+
     return /创作中心/.test(pageText);
   }
+
   function checkReminder() {
     if (
       !pair ||
@@ -888,19 +952,25 @@ body::after {
     ) {
       return;
     }
+
     const key =
       `${pair.savedAt}:${location.href}`;
+
     if (key === reminderKey) {
       return;
     }
+
     reminderKey = key;
+
     toast(
       '已复制 BV + 标题｜打开「关联视频」后按 Ctrl+V，自动填充两个输入框',
       'blue',
       4300
     );
   }
+
   /* ==================== 输入框识别 ==================== */
+
   function visibleEditors() {
     return [
       ...document.querySelectorAll(
@@ -925,6 +995,7 @@ body::after {
         ) {
           return false;
         }
+
         if (
           editor.disabled ||
           editor.readOnly
@@ -932,6 +1003,7 @@ body::after {
           return false;
         }
       }
+
       if (
         editor instanceof
           HTMLTextAreaElement &&
@@ -942,10 +1014,13 @@ body::after {
       ) {
         return false;
       }
+
       const rect =
         editor.getBoundingClientRect();
+
       const style =
         getComputedStyle(editor);
+
       return (
         rect.width > 30 &&
         rect.height > 10 &&
@@ -955,6 +1030,7 @@ body::after {
       );
     });
   }
+
   function fieldText(editor) {
     const parts = [
       editor.getAttribute('placeholder'),
@@ -963,6 +1039,7 @@ body::after {
       editor.getAttribute('name'),
       editor.id
     ];
+
     if (editor.id) {
       const label =
         document.querySelector(
@@ -970,14 +1047,17 @@ body::after {
             CSS.escape(editor.id)
           }"]`
         );
+
       if (label) {
         parts.push(
           label.textContent
         );
       }
     }
+
     let node =
       editor.parentElement;
+
     for (
       let i = 0;
       i < 5 && node;
@@ -985,6 +1065,7 @@ body::after {
     ) {
       const text =
         clean(node.textContent);
+
       const editorCount =
         node.querySelectorAll(
           [
@@ -995,6 +1076,7 @@ body::after {
             '[role="textbox"]'
           ].join(',')
         ).length;
+
       if (
         editorCount === 1 &&
         text.length <= 220
@@ -1002,36 +1084,45 @@ body::after {
         parts.push(text);
         break;
       }
+
       node =
         node.parentElement;
     }
+
     return clean(
       parts.join(' ')
     );
   }
+
   function findCreatorFields() {
     const editors =
       visibleEditors();
+
     if (
       editors.length < 2
     ) {
       return null;
     }
+
     const bvPattern =
       /(关联视频\s*(?:ID)?\s*[／/]?\s*链接|关联视频|视频\s*ID\s*[／/]?\s*链接|BV号|BV\s*ID)/i;
+
     const titlePattern =
       /(描述文案|关联描述|视频描述)/i;
+
     const bvByLabel =
       editorBelowLabel(
         bvPattern,
         editors
       );
+
     const titleByLabel =
       editorBelowLabel(
         titlePattern,
         editors,
         bvByLabel
       );
+
     if (
       bvByLabel &&
       titleByLabel &&
@@ -1042,6 +1133,7 @@ body::after {
         title: titleByLabel
       };
     }
+
     const bvList =
       editors.filter(
         editor =>
@@ -1049,6 +1141,7 @@ body::after {
             fieldText(editor)
           )
       );
+
     const titleList =
       editors.filter(
         editor =>
@@ -1056,7 +1149,9 @@ body::after {
             fieldText(editor)
           )
       );
+
     let best = null;
+
     for (
       const bv of bvList
     ) {
@@ -1066,34 +1161,41 @@ body::after {
         if (bv === title) {
           continue;
         }
+
         const common =
           commonAncestor(
             bv,
             title
           );
+
         if (!common) {
           continue;
         }
+
         const text =
           clean(
             common.textContent
           );
+
         if (
           !bvPattern.test(text) ||
           !titlePattern.test(text)
         ) {
           continue;
         }
+
         const distance =
           Math.abs(
             bv.getBoundingClientRect().top -
             title.getBoundingClientRect().top
           );
+
         const score =
           elementDepth(common) *
             100 -
           distance -
           text.length / 10;
+
         if (
           !best ||
           score > best.score
@@ -1106,6 +1208,7 @@ body::after {
         }
       }
     }
+
     return best
       ? {
           bv: best.bv,
@@ -1113,6 +1216,7 @@ body::after {
         }
       : null;
   }
+
   function editorBelowLabel(
     pattern,
     editors,
@@ -1136,6 +1240,7 @@ body::after {
         clean(
           element.textContent
         );
+
       if (
         !text ||
         text.length > 45 ||
@@ -1143,10 +1248,13 @@ body::after {
       ) {
         return false;
       }
+
       const rect =
         element.getBoundingClientRect();
+
       const style =
         getComputedStyle(element);
+
       if (
         rect.width <= 1 ||
         rect.height <= 1 ||
@@ -1155,6 +1263,7 @@ body::after {
       ) {
         return false;
       }
+
       return ![
         ...element.children
       ].some(child => {
@@ -1162,13 +1271,16 @@ body::after {
           clean(
             child.textContent
           );
+
         return (
           childText.length <= 45 &&
           pattern.test(childText)
         );
       });
     });
+
     let best = null;
+
     for (
       const label of labels
     ) {
@@ -1181,6 +1293,7 @@ body::after {
           document.getElementById(
             label.htmlFor
           );
+
         if (
           editors.includes(linked) &&
           linked !== excluded
@@ -1188,8 +1301,10 @@ body::after {
           return linked;
         }
       }
+
       const labelRect =
         label.getBoundingClientRect();
+
       for (
         const editor of editors
       ) {
@@ -1198,21 +1313,26 @@ body::after {
         ) {
           continue;
         }
+
         const editorRect =
           editor.getBoundingClientRect();
+
         const verticalGap =
           editorRect.top -
           labelRect.bottom;
+
         const horizontalGap =
           Math.abs(
             editorRect.left -
             labelRect.left
           );
+
         const overlapsHorizontally =
           editorRect.right >=
             labelRect.left - 20 &&
           editorRect.left <=
             labelRect.right + 320;
+
         if (
           verticalGap < -10 ||
           verticalGap > 180 ||
@@ -1220,9 +1340,11 @@ body::after {
         ) {
           continue;
         }
+
         const score =
           verticalGap +
           horizontalGap * 0.08;
+
         if (
           !best ||
           score < best.score
@@ -1234,55 +1356,71 @@ body::after {
         }
       }
     }
+
     return (
       best?.editor ||
       null
     );
   }
+
   function commonAncestor(
     first,
     second
   ) {
     const parents =
       new Set();
+
     let node = first;
+
     while (node) {
       parents.add(node);
+
       node =
         node.parentElement;
     }
+
     node = second;
+
     while (node) {
       if (
         parents.has(node)
       ) {
         return node;
       }
+
       node =
         node.parentElement;
     }
+
     return null;
   }
+
   function elementDepth(
     element
   ) {
     let depth = 0;
+
     while (
       element?.parentElement
     ) {
       depth += 1;
+
       element =
         element.parentElement;
     }
+
     return depth;
   }
+
   function getEventEditor(event) {
     const path =
       event.composedPath
         ? event.composedPath()
         : [event.target];
+
     const editors =
       visibleEditors();
+
     for (
       const node of path
     ) {
@@ -1291,6 +1429,7 @@ body::after {
       ) {
         continue;
       }
+
       const editor =
         node.closest(
           [
@@ -1301,6 +1440,7 @@ body::after {
             '[role="textbox"]'
           ].join(',')
         );
+
       if (
         editor &&
         editors.includes(editor)
@@ -1308,8 +1448,10 @@ body::after {
         return editor;
       }
     }
+
     return null;
   }
+
   function nativeValue(
     editor,
     value
@@ -1319,11 +1461,13 @@ body::after {
         HTMLTextAreaElement
         ? HTMLTextAreaElement.prototype
         : HTMLInputElement.prototype;
+
     const setter =
       Object.getOwnPropertyDescriptor(
         prototype,
         'value'
       )?.set;
+
     if (setter) {
       setter.call(
         editor,
@@ -1333,6 +1477,7 @@ body::after {
       editor.value = value;
     }
   }
+
   function fireInput(
     editor,
     text
@@ -1361,6 +1506,7 @@ body::after {
         )
       );
     }
+
     editor.dispatchEvent(
       new Event(
         'change',
@@ -1371,6 +1517,7 @@ body::after {
       )
     );
   }
+
   function replaceValue(
     editor,
     text
@@ -1380,7 +1527,9 @@ body::after {
     ) {
       return false;
     }
+
     editor.focus();
+
     if (
       editor instanceof
         HTMLInputElement ||
@@ -1391,30 +1540,39 @@ body::after {
         editor,
         text
       );
+
       try {
         editor.setSelectionRange(
           text.length,
           text.length
         );
       } catch (_) {}
+
       fireInput(
         editor,
         text
       );
+
       return (
         editor.value === text
       );
     }
+
     const selection =
       getSelection();
+
     const range =
       document.createRange();
+
     range.selectNodeContents(
       editor
     );
+
     selection?.removeAllRanges();
     selection?.addRange(range);
+
     let done = false;
+
     try {
       done =
         document.execCommand(
@@ -1423,19 +1581,23 @@ body::after {
           text
         );
     } catch (_) {}
+
     if (!done) {
       editor.textContent = text;
     }
+
     fireInput(
       editor,
       text
     );
+
     return (
       clean(
         editor.textContent
       ) === clean(text)
     );
   }
+
   function insertAtCursor(
     editor,
     text
@@ -1449,9 +1611,11 @@ body::after {
       const start =
         editor.selectionStart ??
         editor.value.length;
+
       const end =
         editor.selectionEnd ??
         start;
+
       const value =
         editor.value.slice(
           0,
@@ -1459,26 +1623,34 @@ body::after {
         ) +
         text +
         editor.value.slice(end);
+
       nativeValue(
         editor,
         value
       );
+
       editor.setSelectionRange(
         start + text.length,
         start + text.length
       );
+
       fireInput(
         editor,
         text
       );
+
       return true;
     }
+
     editor.focus();
+
     const selection =
       getSelection();
+
     if (!selection) {
       return false;
     }
+
     if (
       !selection.rangeCount ||
       !editor.contains(
@@ -1487,13 +1659,17 @@ body::after {
     ) {
       const range =
         document.createRange();
+
       range.selectNodeContents(
         editor
       );
+
       range.collapse(false);
+
       selection.removeAllRanges();
       selection.addRange(range);
     }
+
     if (
       document.execCommand?.(
         'insertText',
@@ -1503,23 +1679,32 @@ body::after {
     ) {
       return true;
     }
+
     const range =
       selection.getRangeAt(0);
+
     range.deleteContents();
+
     const node =
       document.createTextNode(text);
+
     range.insertNode(node);
     range.setStartAfter(node);
     range.collapse(true);
+
     selection.removeAllRanges();
     selection.addRange(range);
+
     fireInput(
       editor,
       text
     );
+
     return true;
   }
+
   /* ==================== 提醒 ==================== */
+
   function toast(
     message,
     color = 'blue',
@@ -1529,13 +1714,16 @@ body::after {
       document.getElementById(
         'biliclip-toast-host'
       );
+
     if (!host) {
       host =
         document.createElement(
           'div'
         );
+
       host.id =
         'biliclip-toast-host';
+
       host.style.cssText = [
         'all:initial',
         'position:fixed',
@@ -1545,10 +1733,12 @@ body::after {
         'z-index:2147483647',
         'pointer-events:none'
       ].join(';');
+
       const shadow =
         host.attachShadow({
           mode: 'open'
         });
+
       shadow.innerHTML = `
         <style>
           .toast {
@@ -1588,14 +1778,17 @@ body::after {
                 .2,.9,.25,1.15
               );
           }
+
           .toast.blue {
             border-color:
               rgba(0,174,236,.28);
           }
+
           .toast.pink {
             border-color:
               rgba(251,114,153,.36);
           }
+
           .toast.show {
             opacity: 1;
             transform:
@@ -1603,26 +1796,31 @@ body::after {
               scale(1);
           }
         </style>
+
         <div
           class="toast"
           role="status"
         ></div>
       `;
+
       (
         document.body ||
         document.documentElement
       ).appendChild(host);
     }
+
     const box =
       host.shadowRoot
         .querySelector(
           '.toast'
         );
+
     box.textContent = message;
     box.className =
       `toast ${color}`;
     box.style.display =
       'block';
+
     requestAnimationFrame(
       () => {
         box.classList.add(
@@ -1630,21 +1828,26 @@ body::after {
         );
       }
     );
+
     clearTimeout(
       host._timer
     );
+
     host._timer =
       setTimeout(() => {
         box.classList.remove(
           'show'
         );
+
         setTimeout(() => {
           box.style.display =
             'none';
         }, 220);
       }, duration);
   }
+
   /* ==================== B站按钮 ==================== */
+
   function createBiliUI() {
     if (
       !document.body ||
@@ -1652,17 +1855,21 @@ body::after {
     ) {
       return;
     }
+
     document
       .getElementById(
         'biliclip-ui-host'
       )
       ?.remove();
+
     const host =
       document.createElement(
         'div'
       );
+
     host.id =
       'biliclip-ui-host';
+
     host.style.cssText = [
       'all:initial',
       'position:fixed',
@@ -1672,15 +1879,18 @@ body::after {
       'z-index:2147483646',
       'pointer-events:none'
     ].join(';');
+
     const shadow =
       host.attachShadow({
         mode: 'open'
       });
+
     shadow.innerHTML = `
       <style>
         * {
           box-sizing: border-box;
         }
+
         button {
           font-family:
             -apple-system,
@@ -1689,6 +1899,7 @@ body::after {
             "PingFang SC",
             sans-serif;
         }
+
         .hover,
         .bar {
           position: fixed;
@@ -1696,6 +1907,7 @@ body::after {
           align-items: center;
           pointer-events: auto;
         }
+
         .hover {
           gap: 5px;
           height: 32px;
@@ -1714,21 +1926,25 @@ body::after {
           white-space: nowrap;
           transition: .18s;
         }
+
         .hover:hover,
         .primary:hover {
           background: #ff83a7;
           transform:
             translateY(-1px);
         }
+
         .hover:active,
         .btn:active {
           transform:
             scale(.95);
         }
+
         .hover:disabled {
           opacity: .72;
           cursor: wait;
         }
+
         .icon {
           display: grid;
           place-items: center;
@@ -1738,13 +1954,16 @@ body::after {
           background:
             rgba(255,255,255,.18);
         }
+
         .icon svg {
           width: 11px;
           height: 11px;
         }
+
         .bar {
           gap: 7px;
         }
+
         .btn {
           display: inline-flex;
           align-items: center;
@@ -1764,23 +1983,27 @@ body::after {
           white-space: nowrap;
           transition: .18s;
         }
+
         .btn:hover {
           background: #20baef;
           transform:
             translateY(-1px);
         }
+
         .btn.primary {
           background: #fb7299;
           box-shadow:
             0 6px 16px
             rgba(251,114,153,.24);
         }
+
         .mini,
         .mini svg {
           display: grid;
           width: 14px;
           height: 14px;
         }
+
         .tip {
           position: fixed;
           display: none;
@@ -1808,12 +2031,14 @@ body::after {
             translateY(5px);
           transition: .2s;
         }
+
         .tip.show {
           opacity: 1;
           transform:
             translateY(0);
         }
       </style>
+
       <button
         class="hover"
         type="button"
@@ -1821,10 +2046,12 @@ body::after {
         <span class="icon">
           ${copyIcon()}
         </span>
+
         <span class="hover-text">
           复制 BV + 标题
         </span>
       </button>
+
       <div class="bar">
         <button
           class="btn"
@@ -1835,6 +2062,7 @@ body::after {
           </span>
           复制标题
         </button>
+
         <button
           class="btn"
           data-action="bv"
@@ -1844,6 +2072,7 @@ body::after {
           </span>
           复制 BV
         </button>
+
         <button
           class="btn primary"
           data-action="both"
@@ -1854,10 +2083,13 @@ body::after {
           复制 BV+标题
         </button>
       </div>
+
       <div class="tip"></div>
     `;
+
     document.body
       .appendChild(host);
+
     ui = {
       host,
       hover:
@@ -1881,22 +2113,27 @@ body::after {
       frame: 0,
       tipTimer: 0
     };
+
     bindBiliUI();
     syncVideoBar();
+
     setInterval(
       syncVideoBar,
       1000
     );
+
     addEventListener(
       'scroll',
       positionUI,
       true
     );
+
     addEventListener(
       'resize',
       positionUI
     );
   }
+
   function copyIcon() {
     return [
       '<svg ',
@@ -1915,6 +2152,7 @@ body::after {
       '</svg>'
     ].join('');
   }
+
   function bindBiliUI() {
     document.addEventListener(
       'pointermove',
@@ -1925,14 +2163,18 @@ body::after {
         ) {
           return;
         }
+
         const x =
           event.clientX;
+
         const y =
           event.clientY;
+
         ui.frame =
           requestAnimationFrame(
             () => {
               ui.frame = 0;
+
               if (
                 ui.hover.matches(
                   ':hover'
@@ -1940,19 +2182,26 @@ body::after {
               ) {
                 return;
               }
+
               const cover =
                 findCover(x, y);
+
               if (!cover) {
                 ui.hover.style.display =
                   'none';
+
                 ui.active = null;
+
                 return;
               }
+
               const bv =
                 getBV(
                   cover.href
                 );
+
               if (!bv) return;
+
               ui.active = {
                 cover,
                 bv,
@@ -1961,62 +2210,81 @@ body::after {
                     cover
                   )
               };
+
               ui.hoverText
                 .textContent =
                 '复制 BV + 标题';
+
               ui.hover.disabled =
                 false;
+
               ui.hover.style.display =
                 'flex';
+
               positionHover();
             }
           );
       },
       true
     );
+
     ui.hover.addEventListener(
       'click',
       async event => {
         event.preventDefault();
         event.stopPropagation();
+
         const video =
           ui.active;
+
         if (!video) return;
+
         ui.hover.disabled =
           true;
+
         ui.hoverText
           .textContent =
           '读取中…';
+
         const title =
           video.title ||
           await fetchTitle(
             video.bv
           );
+
         if (!title) {
           ui.hover.disabled =
             false;
+
           ui.hoverText
             .textContent =
             '读取失败';
+
           buttonTip(
             ui.hover,
             '读取失败，请重试'
           );
+
           return;
         }
+
         savePair(
           video.bv,
           title
         );
+
         ui.hover.disabled =
           false;
+
         ui.hoverText
           .textContent =
           '已复制';
+
         buttonTip(
           ui.hover,
           '✓ 已复制 · 创作中心一次粘贴'
         );
+
         setTimeout(() => {
           if (ui?.hover) {
             ui.hoverText
@@ -2026,6 +2294,7 @@ body::after {
         }, 1600);
       }
     );
+
     ui.bar.addEventListener(
       'click',
       async event => {
@@ -2033,13 +2302,17 @@ body::after {
           event.target.closest(
             'button[data-action]'
           );
+
         if (!button) return;
+
         event.preventDefault();
         event.stopPropagation();
+
         const bv =
           getBV(
             location.href
           );
+
         const title =
           currentTitle() ||
           (
@@ -2047,6 +2320,7 @@ body::after {
               ? await fetchTitle(bv)
               : ''
           );
+
         if (
           button.dataset.action ===
           'bv'
@@ -2057,13 +2331,16 @@ body::after {
               'BV 读取失败'
             );
           }
+
           clearPair();
           writeClipboard(bv);
+
           return buttonTip(
             button,
             '✓ BV 已复制'
           );
         }
+
         if (
           button.dataset.action ===
           'title'
@@ -2074,13 +2351,16 @@ body::after {
               '标题读取失败'
             );
           }
+
           clearPair();
           writeClipboard(title);
+
           return buttonTip(
             button,
             '✓ 标题已复制'
           );
         }
+
         if (
           !bv ||
           !title
@@ -2090,10 +2370,12 @@ body::after {
             '读取失败'
           );
         }
+
         savePair(
           bv,
           title
         );
+
         buttonTip(
           button,
           '✓ 已复制 · 创作中心一次粘贴'
@@ -2101,12 +2383,14 @@ body::after {
       }
     );
   }
+
   function findCover(x, y) {
     const elements =
       document.elementsFromPoint(
         x,
         y
       );
+
     for (
       const element of elements
     ) {
@@ -2115,16 +2399,19 @@ body::after {
       ) {
         continue;
       }
+
       const anchor =
         element.closest(
           'a[href]'
         );
+
       if (
         !anchor ||
         !getBV(anchor.href)
       ) {
         continue;
       }
+
       if (
         !anchor.querySelector(
           [
@@ -2138,8 +2425,10 @@ body::after {
       ) {
         continue;
       }
+
       const rect =
         anchor.getBoundingClientRect();
+
       if (
         rect.width >= 80 &&
         rect.height >= 45
@@ -2147,17 +2436,23 @@ body::after {
         return anchor;
       }
     }
+
     return null;
   }
+
   function positionHover() {
     const cover =
       ui?.active?.cover;
+
     if (!cover) return;
+
     const rect =
       cover.getBoundingClientRect();
+
     const width =
       ui.hover.offsetWidth ||
       145;
+
     ui.hover.style.left =
       `${
         Math.max(
@@ -2172,6 +2467,7 @@ body::after {
           )
         )
       }px`;
+
     ui.hover.style.top =
       `${
         Math.max(
@@ -2180,8 +2476,10 @@ body::after {
         )
       }px`;
   }
+
   function syncVideoBar() {
     if (!ui) return;
+
     if (
       !/^\/video\/BV[0-9A-Za-z]{10}/i
         .test(
@@ -2189,10 +2487,13 @@ body::after {
         )
     ) {
       ui.title = null;
+
       ui.bar.style.display =
         'none';
+
       return;
     }
+
     ui.title =
       document.querySelector(
         [
@@ -2202,17 +2503,23 @@ body::after {
           '.video-title'
         ].join(',')
       );
+
     if (!ui.title) {
       ui.bar.style.display =
         'none';
+
       return;
     }
+
     ui.bar.style.display =
       'flex';
+
     positionBar();
   }
+
   function positionUI() {
     if (!ui) return;
+
     if (
       ui.active &&
       ui.hover.style.display !==
@@ -2220,19 +2527,23 @@ body::after {
     ) {
       positionHover();
     }
+
     if (ui.title) {
       positionBar();
     }
   }
+
   function positionBar() {
     if (
       !ui?.title?.isConnected
     ) {
       return;
     }
+
     const titleRect =
       ui.title
         .getBoundingClientRect();
+
     const rows = [
       ...document.querySelectorAll(
         [
@@ -2242,10 +2553,12 @@ body::after {
         ].join(',')
       )
     ];
+
     const row =
       rows.find(element => {
         const rect =
           element.getBoundingClientRect();
+
         return (
           rect.width > 40 &&
           rect.top >=
@@ -2254,20 +2567,26 @@ body::after {
             titleRect.bottom + 100
         );
       });
+
     if (
       !row ||
       titleRect.bottom < 58
     ) {
       ui.bar.style.display =
         'none';
+
       return;
     }
+
     ui.bar.style.display =
       'flex';
+
     const rowRect =
       row.getBoundingClientRect();
+
     const datePattern =
       /\d{4}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}/;
+
     const dateElements = [
       ...row.querySelectorAll('*')
     ]
@@ -2276,19 +2595,23 @@ body::after {
           clean(
             element.textContent
           );
+
         if (
           !datePattern.test(text)
         ) {
           return false;
         }
+
         const rect =
           element.getBoundingClientRect();
+
         if (
           rect.width <= 1 ||
           rect.height <= 1
         ) {
           return false;
         }
+
         return ![
           ...element.children
         ].some(child =>
@@ -2302,8 +2625,10 @@ body::after {
       .sort((a, b) => {
         const aRect =
           a.getBoundingClientRect();
+
         const bRect =
           b.getBoundingClientRect();
+
         return (
           aRect.width *
             aRect.height -
@@ -2311,6 +2636,7 @@ body::after {
             bRect.height
         );
       });
+
     const dateElement =
       row.querySelector(
         [
@@ -2321,16 +2647,20 @@ body::after {
         ].join(',')
       ) ||
       dateElements[0];
+
     const anchorRect =
       dateElement
         ?.getBoundingClientRect() ||
       rowRect;
+
     const width =
       ui.bar.offsetWidth ||
       275;
+
     const height =
       ui.bar.offsetHeight ||
       32;
+
     ui.bar.style.left =
       `${
         Math.max(
@@ -2344,6 +2674,7 @@ body::after {
           )
         )
       }px`;
+
     ui.bar.style.top =
       `${
         Math.max(
@@ -2356,24 +2687,31 @@ body::after {
         )
       }px`;
   }
+
   function buttonTip(
     button,
     message
   ) {
     const tip = ui.tip;
+
     const rect =
       button.getBoundingClientRect();
+
     tip.textContent =
       message;
+
     tip.style.display =
       'block';
+
     tip.classList.remove(
       'show'
     );
+
     requestAnimationFrame(
       () => {
         const width =
           tip.offsetWidth;
+
         tip.style.left =
           `${
             Math.max(
@@ -2388,6 +2726,7 @@ body::after {
               )
             )
           }px`;
+
         tip.style.top =
           `${
             Math.max(
@@ -2397,26 +2736,32 @@ body::after {
               7
             )
           }px`;
+
         tip.classList.add(
           'show'
         );
       }
     );
+
     clearTimeout(
       ui.tipTimer
     );
+
     ui.tipTimer =
       setTimeout(() => {
         tip.classList.remove(
           'show'
         );
+
         setTimeout(() => {
           tip.style.display =
             'none';
         }, 200);
       }, 1100);
   }
+
   /* ==================== BV与标题 ==================== */
+
   function getBV(url) {
     try {
       return (
@@ -2442,6 +2787,7 @@ body::after {
       );
     }
   }
+
   function currentTitle() {
     const element =
       document.querySelector(
@@ -2452,6 +2798,7 @@ body::after {
           '.video-title'
         ].join(',')
       );
+
     return clean(
       element?.getAttribute(
         'title'
@@ -2462,6 +2809,7 @@ body::after {
       element?.textContent
     );
   }
+
   function cardTitle(cover) {
     const direct =
       clean(
@@ -2472,6 +2820,7 @@ body::after {
           'aria-label'
         )
       );
+
     if (
       direct &&
       !/^BV[0-9A-Za-z]{10}$/i
@@ -2479,6 +2828,7 @@ body::after {
     ) {
       return direct;
     }
+
     const card =
       cover.closest(
         [
@@ -2495,6 +2845,7 @@ body::after {
       cover
         .parentElement
         ?.parentElement;
+
     const element =
       card?.querySelector(
         [
@@ -2507,6 +2858,7 @@ body::after {
           'a[class*="title"]'
         ].join(',')
       );
+
     const title =
       clean(
         element?.getAttribute?.(
@@ -2514,6 +2866,7 @@ body::after {
         ) ||
         element?.textContent
       );
+
     return (
       /^BV[0-9A-Za-z]{10}$/i
         .test(title)
@@ -2521,22 +2874,27 @@ body::after {
       ? ''
       : title;
   }
+
   function fetchTitle(bv) {
     return new Promise(
       resolve => {
         GM_xmlhttpRequest({
           method: 'GET',
+
           url:
             'https://api.bilibili.com/' +
             'x/web-interface/view?bvid=' +
             encodeURIComponent(bv),
+
           timeout: 8000,
+
           onload(response) {
             try {
               const data =
                 JSON.parse(
                   response.responseText
                 );
+
               resolve(
                 clean(
                   data?.data?.title
@@ -2546,9 +2904,11 @@ body::after {
               resolve('');
             }
           },
+
           onerror() {
             resolve('');
           },
+
           ontimeout() {
             resolve('');
           }
