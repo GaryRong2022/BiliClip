@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiliClip喵贴 隐私政策</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f7f8fa;
+    color: #333;
+    line-height: 1.8;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 14px;
+    padding: 40px 44px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.05);
+  }
+  h1 {
+    font-size: 24px;
+    color: #fb7299;
+    margin-bottom: 8px;
+  }
+  .update {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: 17px;
+    color: #222;
+    margin: 28px 0 10px;
+    padding-left: 10px;
+    border-left: 3px solid #fb7299;
+  }
+  p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  ul {
+    margin: 8px 0 12px 22px;
+  }
+  li {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .highlight {
+    background: #fff5f8;
+    border: 1px solid #ffd6e2;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #c2185b;
+  }
+  .contact {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    font-size: 13px;
+    color: #888;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>BiliClip喵贴 隐私政策</h1>
+  <div class="update">最后更新日期：2026年9月6日</div>
+
+  <p>BiliClip喵贴（以下简称"本扩展"）是一款浏览器扩展工具，旨在帮助用户快速复制 B 站视频的 BV 码和标题。我们高度重视您的隐私，本政策说明本扩展如何处理信息。</p>
+
+  <h2>一、本扩展收集什么信息</h2>
+  <p><strong>本扩展不收集、不上传、不共享任何个人身份信息。</strong></p>
+  <p>本扩展在运行过程中仅在您的浏览器本地临时处理以下数据：</p>
+  <ul>
+    <li><strong>BV 码和视频标题</strong>：当您点击复制按钮时，当前视频的 BV 码和标题会临时保存在浏览器本地存储（chrome.storage.local）中，用于后续的自动粘贴功能。该数据<strong>仅存储在您的本地浏览器</strong>，不会发送到任何服务器。</li>
+    <li><strong>剪贴板内容</strong>：本扩展需要写入剪贴板权限（clipboardWrite），仅用于将 BV 码或标题复制到您的剪贴板。本扩展<strong>不会读取</strong>您剪贴板中已有的内容。</li>
+  </ul>
+
+  <h2>二、本扩展请求的权限说明</h2>
+  <ul>
+    <li><strong>storage</strong>：在浏览器本地临时存储 BV 码和标题，关闭浏览器或完成粘贴后可自动清除。</li>
+    <li><strong>clipboardWrite</strong>：将 BV 码和标题写入您的剪贴板。</li>
+    <li><strong>host_permissions（bilibili.com / api.bilibili.com）</strong>：仅在 B 站页面注入功能脚本，并通过 B 站官方 API 获取视频标题。<strong>不会访问其他网站的数据</strong>。</li>
+  </ul>
+
+  <h2>三、数据存储与清除</h2>
+  <p>所有临时数据均存储在您本地浏览器的 storage.local 中，您可以随时通过以下方式清除：</p>
+  <ul>
+    <li>在浏览器扩展管理页面移除本扩展，所有本地数据将被一并删除。</li>
+    <li>在浏览器设置中清除站点数据和扩展存储。</li>
+  </ul>
+
+  <h2>四、第三方服务</h2>
+  <p>本扩展仅调用 B 站官方 API（api.bilibili.com）获取视频标题信息，不接入任何第三方分析、广告或数据追踪服务。</p>
+
+  <h2>五、未成年人保护</h2>
+  <p>本扩展不面向未成年人，也不会主动收集未成年人的任何信息。</p>
+
+  <div class="highlight">
+    总结：本扩展不收集任何个人数据，所有操作均在您的浏览器本地完成，不上传、不共享、不追踪。
+  </div>
+
+  <div class="contact">
+    如有疑问，请通过以下方式联系：<br>
+    邮箱：i@lcat.cc<br>
+    官网：https://bv.lcat.cc/
+  </div>
+</div>
+</body>
+</html>
